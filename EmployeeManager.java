@@ -15,7 +15,9 @@ public class EmployeeManager {
             System.out.println("1. Add employee");
             System.out.println("2. Display all employees");
             System.out.println("3. Search employee by ID");
-            System.out.println("4. Exit");
+            System.out.println("4. Update employee details");
+            System.out.println("5. Delete employee");
+            System.out.println("6. Exit");
             System.out.print("Choose an option: ");
 
             switch (scanner.nextLine().trim()) {
@@ -29,11 +31,17 @@ public class EmployeeManager {
                     searchEmployee();
                     break;
                 case "4":
+                    updateEmployee();
+                    break;
+                case "5":
+                    deleteEmployee();
+                    break;
+                case "6":
                     running = false;
                     System.out.println("Goodbye!");
                     break;
                 default:
-                    System.out.println("Invalid option. Please choose 1–4.");
+                    System.out.println("Invalid option. Please choose 1–6.");
             }
         }
         scanner.close();
@@ -60,19 +68,13 @@ public class EmployeeManager {
             return;
         }
 
-        System.out.print("Salary: ");
-        String salaryInput = scanner.nextLine().trim();
-        try {
-            double salary = Double.parseDouble(salaryInput);
-            if (!Double.isFinite(salary) || salary < 0) {
-                System.out.println("Salary must be a non-negative number.");
-                return;
-            }
-            employees.add(new Employee(id, name, department, salary));
-            System.out.println("Employee added successfully.");
-        } catch (NumberFormatException e) {
-            System.out.println("Please enter a valid numeric salary.");
+        Double salary = readSalary("Salary: ");
+        if (salary == null) {
+            return;
         }
+
+        employees.add(new Employee(id, name, department, salary));
+        System.out.println("Employee added successfully.");
     }
 
     private static void displayEmployees() {
@@ -84,8 +86,7 @@ public class EmployeeManager {
         System.out.printf("%-12s %-24s %-20s %12s%n", "ID", "Name", "Department", "Salary");
         System.out.println("-----------------------------------------------------------------------");
         for (Employee employee : employees) {
-            System.out.printf("%-12s %-24s %-20s %12.2f%n",
-                    employee.getId(), employee.getName(), employee.getDepartment(), employee.getSalary());
+            printEmployee(employee);
         }
     }
 
@@ -104,6 +105,83 @@ public class EmployeeManager {
         }
     }
 
+    private static void updateEmployee() {
+        System.out.print("Enter employee ID to update: ");
+        String id = scanner.nextLine().trim();
+        Employee employee = findEmployee(id);
+        if (employee == null) {
+            System.out.println("No employee found with ID " + id + ".");
+            return;
+        }
+
+        System.out.println("Press Enter to keep the current value.");
+        System.out.print("Name [" + employee.getName() + "]: ");
+        String name = scanner.nextLine().trim();
+        if (!name.isEmpty()) {
+            employee.setName(name);
+        }
+
+        System.out.print("Department [" + employee.getDepartment() + "]: ");
+        String department = scanner.nextLine().trim();
+        if (!department.isEmpty()) {
+            employee.setDepartment(department);
+        }
+
+        while (true) {
+            System.out.print("Salary [" + String.format("%.2f", employee.getSalary()) + "]: ");
+            String salaryInput = scanner.nextLine().trim();
+            if (salaryInput.isEmpty()) {
+                break;
+            }
+            try {
+                double salary = Double.parseDouble(salaryInput);
+                if (!Double.isFinite(salary) || salary < 0) {
+                    System.out.println("Salary must be a non-negative number. Try again or press Enter to keep the current salary.");
+                    continue;
+                }
+                employee.setSalary(salary);
+                break;
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid numeric salary, or press Enter to keep the current salary.");
+            }
+        }
+        System.out.println("Employee updated successfully.");
+    }
+
+    private static void deleteEmployee() {
+        System.out.print("Enter employee ID to delete: ");
+        String id = scanner.nextLine().trim();
+        Employee employee = findEmployee(id);
+        if (employee == null) {
+            System.out.println("No employee found with ID " + id + ".");
+            return;
+        }
+
+        employees.remove(employee);
+        System.out.println("Employee deleted successfully.");
+    }
+
+    private static Double readSalary(String prompt) {
+        System.out.print(prompt);
+        String salaryInput = scanner.nextLine().trim();
+        try {
+            double salary = Double.parseDouble(salaryInput);
+            if (!Double.isFinite(salary) || salary < 0) {
+                System.out.println("Salary must be a non-negative number.");
+                return null;
+            }
+            return salary;
+        } catch (NumberFormatException e) {
+            System.out.println("Please enter a valid numeric salary.");
+            return null;
+        }
+    }
+
+    private static void printEmployee(Employee employee) {
+        System.out.printf("%-12s %-24s %-20s %12.2f%n",
+                employee.getId(), employee.getName(), employee.getDepartment(), employee.getSalary());
+    }
+
     private static Employee findEmployee(String id) {
         for (Employee employee : employees) {
             if (employee.getId().equalsIgnoreCase(id)) {
@@ -115,9 +193,9 @@ public class EmployeeManager {
 
     private static class Employee {
         private final String id;
-        private final String name;
-        private final String department;
-        private final double salary;
+        private String name;
+        private String department;
+        private double salary;
 
         private Employee(String id, String name, String department, double salary) {
             this.id = id;
@@ -130,5 +208,8 @@ public class EmployeeManager {
         private String getName() { return name; }
         private String getDepartment() { return department; }
         private double getSalary() { return salary; }
+        private void setName(String name) { this.name = name; }
+        private void setDepartment(String department) { this.department = department; }
+        private void setSalary(double salary) { this.salary = salary; }
     }
 }
